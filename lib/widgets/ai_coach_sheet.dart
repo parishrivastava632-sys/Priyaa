@@ -7,11 +7,18 @@ class AiCoachSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fitness = context.read<FitnessService>();
+    final fitness = context.watch<FitnessService>();
     final state = fitness.getMomentumState();
+    final advice = _getCoachResponse(state);
     
+    // Mocking AI memory
+    final List<String> memory = [
+      "Yesterday: You felt highly motivated.",
+      "2 days ago: You hit a 3-day recovery streak.",
+    ];
+
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
       decoration: const BoxDecoration(
         color: Color(0xFF1E293B),
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
@@ -20,70 +27,65 @@ class AiCoachSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
+          _buildHandle(),
           const SizedBox(height: 24),
-          Row(
+          const Row(
             children: [
-              const CircleAvatar(
-                backgroundColor: Color(0xFFCCFF00),
-                child: Icon(Icons.psychology, color: Colors.black),
-              ),
-              const SizedBox(width: 16),
-              Text(
-                "Flex AI Coach",
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
+              Icon(Icons.psychology, color: Color(0xFFCCFF00)),
+              SizedBox(width: 12),
+              Text("AI COACH", style: TextStyle(color: Color(0xFFCCFF00), fontWeight: FontWeight.bold, letterSpacing: 2)),
             ],
           ),
           const SizedBox(height: 24),
-          _buildCoachBubble(_getCoachResponse(state)),
+          Text(
+            advice,
+            style: const TextStyle(color: Colors.white, fontSize: 18, height: 1.6, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 32),
+          const Text("AI MEMORY RECALL", style: TextStyle(color: Colors.white54, letterSpacing: 2, fontSize: 12)),
           const SizedBox(height: 16),
-          _buildOption(context, "How do I level up faster?"),
-          _buildOption(context, "Give me a 5-min routine."),
-          const SizedBox(height: 16),
+          ...memory.map((m) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text("• $m", style: const TextStyle(color: Colors.white38, fontSize: 14)),
+          )),
+          const SizedBox(height: 40),
+          _buildActionButtons(context),
         ],
       ),
     );
   }
 
-  Widget _buildCoachBubble(String text) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: const BorderRadius.only(
-          topRight: Radius.circular(20),
-          bottomLeft: Radius.circular(20),
-          bottomRight: Radius.circular(20),
+  Widget _buildHandle() {
+    return Center(
+      child: Container(
+        width: 40,
+        height: 4,
+        decoration: BoxDecoration(
+          color: Colors.white12,
+          borderRadius: BorderRadius.circular(2),
         ),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(color: Colors.white70, fontSize: 16, height: 1.5),
       ),
     );
   }
 
-  Widget _buildOption(BuildContext context, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+  Widget _buildActionButtons(BuildContext context) {
+    return Column(
+      children: [
+        _buildCoachAction("Analyze my trends", Icons.analytics_outlined),
+        const SizedBox(height: 12),
+        _buildCoachAction("Adjust my current goal", Icons.tune),
+      ],
+    );
+  }
+
+  Widget _buildCoachAction(String text, IconData icon) {
+    return Container(
+      width: double.infinity,
       child: OutlinedButton(
         onPressed: () {},
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: Colors.white10),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           padding: const EdgeInsets.all(12),
         ),
         child: Row(

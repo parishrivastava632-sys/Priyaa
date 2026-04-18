@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'quiz_screen.dart';
 import '../services/gamification_service.dart';
+import '../services/archetype_service.dart';
 import '../models/identity_goal.dart';
+import '../models/gamification_badge.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -9,10 +11,12 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gamification = context.watch<GamificationService>();
+    final archetypeService = context.watch<ArchetypeService>();
+    final userArchetype = archetypeService.userArchetype;
     
     // Mocking an identity goal for the profile
     final identity = IdentityGoal(
-      type: IdentityType.athlete,
+      type: userArchetype?.type == Archetype.stoicWolf ? IdentityType.athlete : IdentityType.warrior,
       nickname: "The Consistent Warrior",
       coreMantra: "Never Miss Twice",
       startedAt: DateTime.now().subtract(const Duration(days: 14)),
@@ -59,6 +63,16 @@ class ProfileScreen extends StatelessWidget {
         Text(
           "Level ${gamification.level} Athlete",
           style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 12),
+        ElevatedButton.icon(
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const QuizScreen())),
+          style: ElevatedButton.styleFrom(
+             backgroundColor: Colors.white10,
+             foregroundColor: Theme.of(context).primaryColor,
+          ),
+          icon: const Icon(Icons.psychology),
+          label: const Text("REDETERMINE ARCHETYPE"),
         ),
       ],
     );

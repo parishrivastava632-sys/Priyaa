@@ -9,6 +9,7 @@ import '../widgets/nudge_card.dart';
 import '../widgets/ai_coach_sheet.dart';
 import '../widgets/activity_heatmap.dart';
 import '../widgets/leaderboard_widget.dart';
+import '../widgets/momentum_feed.dart';
 import 'profile_screen.dart';
 import 'workout_screen.dart';
 import 'analytics_screen.dart';
@@ -47,6 +48,8 @@ class DashboardScreen extends StatelessWidget {
                 _buildConsistencyMeter(context, score, state),
                 const SizedBox(height: 40),
                 _buildActivityHeatmap(context),
+                const SizedBox(height: 40),
+                const MomentumFeed(),
                 const SizedBox(height: 40),
                 _buildSectionHeader("ADAPTIVE COACHING"),
                 const SizedBox(height: 16),

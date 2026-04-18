@@ -8,6 +8,8 @@ import 'services/gamification_service.dart';
 import 'services/theme_service.dart';
 import 'services/health_service.dart';
 import 'services/community_service.dart';
+import 'services/archetype_service.dart';
+import 'services/momentum_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +38,8 @@ void main() async {
           create: (_) => CommunityService(),
           update: (_, gamification, community) => community!..updatePoints(gamification.xp),
         ),
+        ChangeNotifierProvider(create: (_) => ArchetypeService()),
+        ChangeNotifierProvider(create: (_) => MomentumService()),
       ],
       child: const FlexFlowApp(),
     ),
