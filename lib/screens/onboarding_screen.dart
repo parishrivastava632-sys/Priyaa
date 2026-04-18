@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
+import 'package:provider/provider.dart';
+import '../services/fitness_service.dart';
 import 'dashboard_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -115,11 +117,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       closedShape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(30)),
       ),
-      closedBuilder: (context, action) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-        child: Text(
-          _currentPage == _pages.length - 1 ? "GET STARTED" : "NEXT",
-          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+      closedBuilder: (context, action) => GestureDetector(
+        onTap: () {
+          if (_currentPage == _pages.length - 1) {
+            context.read<FitnessService>().setOnboardingSeen();
+          } else {
+            _controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+          child: Text(
+            _currentPage == _pages.length - 1 ? "GET STARTED" : "NEXT",
+            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          ),
         ),
       ),
       openBuilder: (context, action) => const DashboardScreen(),

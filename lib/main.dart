@@ -5,6 +5,7 @@ import 'app.dart';
 import 'services/fitness_service.dart';
 import 'services/motivation_service.dart';
 import 'services/gamification_service.dart';
+import 'services/theme_service.dart';
 import 'services/health_service.dart';
 import 'services/community_service.dart';
 
@@ -25,6 +26,10 @@ void main() async {
         ChangeNotifierProxyProvider<FitnessService, GamificationService>(
           create: (_) => GamificationService(),
           update: (_, fitness, gamification) => gamification!..update(fitness),
+        ),
+        ChangeNotifierProxyProvider<FitnessService, ThemeService>(
+          create: (_) => ThemeService(),
+          update: (_, fitness, theme) => theme!..update(fitness),
         ),
         ChangeNotifierProvider(create: (_) => HealthService()),
         ChangeNotifierProxyProvider<GamificationService, CommunityService>(

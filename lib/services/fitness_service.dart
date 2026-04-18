@@ -4,8 +4,15 @@ import '../models/activity.dart';
 class FitnessService with ChangeNotifier {
   final List<Activity> _activities = [];
   final List<UserMetrics> _metrics = [];
+  bool _onboardingSeen = false;
 
   List<Activity> get activities => List.unmodifiable(_activities);
+  bool get onboardingSeen => _onboardingSeen;
+  
+  void setOnboardingSeen() {
+    _onboardingSeen = true;
+    notifyListeners();
+  }
   
   void addActivity(Activity activity) {
     _activities.add(activity);
