@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlexFlow | Interactive Preview</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0F172A;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --primary: #CCFF00;
+            --secondary: #38BDF8;
+            --text: #FFFFFF;
+            --text-dim: rgba(255, 255, 255, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+
+        body {
+            background: radial-gradient(ellipse at top left, #1a2a1a, #0F172A 60%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            gap: 20px;
+        }
+
+        .desktop-label {
+            color: var(--text-dim);
+            font-size: 12px;
+            letter-spacing: 3px;
+            text-align: center;
+        }
+
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            background: linear-gradient(160deg, #0F172A 0%, #1E293B 100%);
+            border: 2px solid #334155;
+            border-radius: 44px;
+            position: relative;
+            box-shadow: 0 60px 120px rgba(0,0,0,0.6), 0 0 0 1px #1e293b;
+            overflow: hidden;
+        }
+
+        /* ---- VIEWS ---- */
+        .view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow-y: auto; scrollbar-width: none; display: none; }
+        .view.active { display: block; }
+        .view::-webkit-scrollbar { display: none; }
+
+        /* ---- HEADER ---- */
+        header {
+            padding: 48px 24px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: linear-gradient(to bottom, #0F172A, transparent);
+            z-index: 10;
+        }
+
+        .logo-area .eyebrow { font-size: 10px; letter-spacing: 4px; color: var(--primary); margin-bottom: 2px; }
+        .logo-area h1 { font-size: 22px; font-weight: 900; }
+
+        .avatar-group { display: flex; gap: 10px; }
+
+        .icon-btn {
+            width: 38px; height: 38px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; font-size: 16px; border: 1px solid rgba(255,255,255,0.06);
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.12); transform: scale(1.05); }
+
+        /* ---- CONTAINER ---- */
+        .container { padding: 0 20px 100px; }
+
+        /* ---- SECTION LABEL ---- */
+        .label { font-size: 10px; letter-spacing: 2.5px; color: var(--text-dim); font-weight: 700; margin-bottom: 14px; display: block; }
+
+        /* ---- GLASS CARD ---- */
+        .glass-card {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 28px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        /* ---- CONSISTENCY SCORE ---- */
+        .score-row { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+        .score { font-size: 52px; font-weight: 900; color: #fff; }
+        .badge {
+            background: rgba(204,255,0,0.12);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+        .progress-bar { height: 6px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 85%; background: var(--primary); box-shadow: 0 0 16px var(--primary); transition: 1s ease; }
+
+        /* ---- FEED ---- */
+        .feed-item {
+            display: flex; gap: 14px;
+            margin-bottom: 10px;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 18px;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .feed-item:hover { background: rgba(255,255,255,0.07); }
+        .feed-icon { width: 30px; height: 30px; border-radius: 10px; background: rgba(56,189,248,0.15); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+        .feed-text { font-size: 13px; color: var(--text-dim); line-height: 1.4; }
+        .feed-text b { color: #fff; }
+
+        /* ---- SUGGESTION CARD ---- */
+        .suggestion-card {
+            background: rgba(204,255,0,0.04);
+            border: 1px solid rgba(204,255,0,0.12);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .suggestion-card:hover { background: rgba(204,255,0,0.08); }
+        .suggestion-card h3 { font-size: 15px; margin-top: 4px; }
+        .suggestion-card .play-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+        .play-btn { background: var(--primary); color: #000; border-radius: 12px; padding: 10px 20px; font-weight: 700; font-size: 12px; cursor: pointer; }
+
+        /* ---- WORKOUT SCREEN ---- */
+        .workout-header { padding: 48px 20px 0; display: flex; justify-content: space-between; align-items: center; }
+        .back-btn { color: var(--text-dim); cursor: pointer; font-size: 22px; }
+        .workout-title { font-size: 11px; letter-spacing: 2px; color: var(--text-dim); font-weight: 700; }
+        .timer-area { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+        .timer-ring { position: relative; width: 220px; height: 220px; margin-bottom: 24px; }
+        .timer-ring svg { transform: rotate(-90deg); }
+        .timer-ring .ring-bg { stroke: rgba(255,255,255,0.06); fill: none; }
+        .timer-ring .ring-fill { stroke: var(--primary); fill: none; stroke-linecap: round; stroke-dasharray: 628; stroke-dashoffset: 94; filter: drop-shadow(0 0 6px var(--primary)); transition: stroke-dashoffset 1s linear; }
+        .timer-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+        .timer-center .time { font-size: 46px; font-weight: 900; }
+        .timer-center .sublabel { font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-top: 2px; }
+        .exercise-label { font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 8px; text-align: center; }
+        .exercise-sub { font-size: 13px; color: var(--text-dim); text-align: center; margin-bottom: 40px; }
+        .start-btn {
+            background: var(--primary);
+            color: #000;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            font-size: 13px;
+            padding: 18px 48px;
+            border-radius: 40px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(204,255,0,0.25);
+            transition: 0.2s;
+        }
+        .start-btn:hover { transform: scale(1.03); }
+        .start-btn.running { background: rgba(255,255,255,0.06); color: var(--text-dim); box-shadow: none; }
+
+        /* ---- ANALYTICS SCREEN ---- */
+        .analytics-body { padding: 20px; }
+        .stat-row { display: flex; gap: 14px; margin-bottom: 24px; }
+        .stat-box { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; padding: 18px; }
+        .stat-box .stat-label { font-size: 10px; letter-spacing: 1.5px; color: var(--text-dim); margin-bottom: 6px; }
+        .stat-box .stat-val { font-size: 26px; font-weight: 900; }
+        .chart-area { margin-bottom: 24px; }
+        .chart-bars { display: flex; align-items: flex-end; gap: 6px; height: 100px; }
+        .bar { flex: 1; border-radius: 6px 6px 0 0; background: rgba(204,255,0,0.3); transition: 0.3s; }
+        .bar:hover { background: var(--primary); }
+        .mood-bars { display: flex; align-items: flex-end; gap: 8px; height: 60px; padding: 0 4px; }
+        .mood-bar { flex: 1; border-radius: 4px 4px 0 0; background: rgba(56,189,248,0.4); transition: 0.3s; }
+        .mood-bar:hover { background: var(--secondary); }
+        .insight-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; padding: 18px; display: flex; gap: 14px; }
+        .insight-icon { font-size: 20px; flex-shrink: 0; }
+        .insight-text { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+        .insight-text b { color: #fff; }
+
+        /* ---- QUIZ ---- */
+        .quiz-view { display: flex; flex-direction: column; justify-content: center; padding: 40px 28px; height: 100%; }
+        .quiz-progress { height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; margin-bottom: 48px; overflow: hidden; }
+        .quiz-progress-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width 0.4s; }
+        .quiz-q { font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 36px; line-height: 1.3; }
+        .quiz-opt {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 18px 20px;
+            border-radius: 16px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: 0.25s;
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+        .quiz-opt:hover { background: rgba(204,255,0,0.08); border-color: var(--primary); color: #fff; }
+
+        /* ---- AI SHEET ---- */
+        .ai-fab {
+            position: absolute;
+            bottom: 28px;
+            right: 24px;
+            width: 58px;
+            height: 58px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 8px 28px rgba(204,255,0,0.35);
+            cursor: pointer;
+            z-index: 100;
+            transition: 0.2s;
+        }
+        .ai-fab:hover { transform: scale(1.05); }
+
+        .ai-sheet {
+            position: absolute;
+            bottom: -100%;
+            left: 0;
+            width: 100%;
+            background: #1E293B;
+            border-radius: 32px 32px 0 0;
+            padding: 36px 28px 40px;
+            transition: 0.55s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: 200;
+        }
+        .ai-sheet.active { bottom: 0; }
+        .ai-sheet h4 { color: var(--primary); font-size: 10px; letter-spacing: 2.5px; font-weight: 700; margin-bottom: 16px; }
+        .ai-sheet p { font-size: 17px; line-height: 1.6; margin-bottom: 12px; }
+        .ai-memory { font-size: 12px; color: var(--text-dim); margin-bottom: 28px; line-height: 1.8; }
+        .ai-memory .mem-label { letter-spacing: 2px; font-size: 9px; font-weight: 700; margin-bottom: 6px; display: block; }
+        .btn { background: var(--primary); color: #000; padding: 15px; border-radius: 14px; text-align: center; font-weight: 700; display: block; cursor: pointer; font-size: 13px; }
+        .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-dim); margin-top: 10px; font-size: 13px; }
+
+        /* ---- ARCHETYPE RESULT ---- */
+        .archetype-view { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 48px 28px; height: 100%; }
+        .archetype-icon { font-size: 80px; margin-bottom: 24px; }
+        .archetype-name { font-size: 28px; font-weight: 900; color: var(--primary); margin-bottom: 12px; }
+        .archetype-desc { font-size: 15px; color: var(--text-dim); line-height: 1.6; margin-bottom: 36px; }
+
+        /* ---- BOTTOM NAV ---- */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 80px;
+            background: rgba(15,23,42,0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255,255,255,0.04);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            z-index: 50;
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 8px 16px; border-radius: 14px; transition: 0.2s; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); }
+        .nav-item.active .nav-icon { filter: none; }
+        .nav-icon { font-size: 20px; filter: grayscale(1) brightness(0.5); transition: 0.2s; }
+        .nav-item.active .nav-icon { filter: none; }
+        .nav-label { font-size: 9px; letter-spacing: 1px; color: var(--text-dim); font-weight: 600; }
+        .nav-item.active .nav-label { color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<p class="desktop-label">✦ FLEXFLOW INTERACTIVE PREVIEW ✦</p>
+
+<div class="phone-frame">
+
+    <!-- ===== DASHBOARD VIEW ===== -->
+    <div class="view active" id="dashboardView">
+        <header>
+            <div class="logo-area">
+                <p class="eyebrow">FLEXFLOW</p>
+                <h1>Athlete Mode ⚡</h1>
+            </div>
+            <div class="avatar-group">
+                <div class="icon-btn" onclick="showView('analyticsView')" title="Analytics">📊</div>
+                <div class="icon-btn" onclick="showView('quizView')" title="Archetype Quiz">🎯</div>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- Consistency Meter -->
+            <div class="glass-card">
+                <span class="label">7-DAY CONSISTENCY</span>
+                <div class="score-row">
+                    <span class="score">85%</span>
+                    <span class="badge">ON TRACK</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <!-- Momentum Feed -->
+            <span class="label">MOMENTUM FEED</span>
+            <div class="feed-item">
+                <div class="feed-icon">⚡</div>
+                <div class="feed-text"><b>Claire</b> just completed a 5-min Recovery Session · 12m ago</div>
+            </div>
+            <div class="feed-item">
+                <div class="feed-icon">🏆</div>
+                <div class="feed-text"><b>Dave</b> hit a 14-day Consistency Milestone! · 2h ago</div>
+            </div>
+            <div class="feed-item">
+                <div class="feed-icon">🛡️</div>
+                <div class="feed-text"><b>Zenith</b> reinforced their "Never Miss Twice" mantra · 5h ago</div>
+            </div>
+
+            <!-- Adaptive Suggestion -->
+            <span class="label" style="margin-top: 24px;">ADAPTIVE COACHING</span>
+            <div class="glass-card suggestion-card" onclick="showView('workoutView')">
+                <span class="label" style="color: var(--primary)">LIVE SUGGESTION</span>
+                <h3>10-Min Steady State Recovery</h3>
+                <p style="font-size:12px; color: var(--text-dim); margin-top: 6px;">Based on your 5-day streak, today is a recovery window.</p>
+                <div class="play-row">
+                    <span style="font-size:11px; color: var(--text-dim);">Tap to start session</span>
+                    <div class="play-btn">▶ START</div>
+                </div>
+            </div>
+
+            <!-- XP Progress -->
+            <span class="label">XP & LEVEL</span>
+            <div class="glass-card" style="padding: 18px 24px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom: 10px;">
+                    <span style="color: var(--text-dim); font-size:13px;">Level 6 Athlete</span>
+                    <span style="color: var(--primary); font-weight:700; font-size:13px;">2,450 XP</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 65%; box-shadow: 0 0 12px var(--secondary); background: var(--secondary);"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== WORKOUT VIEW ===== -->
+    <div class="view" id="workoutView">
+        <div class="workout-header">
+            <div class="back-btn" onclick="showView('dashboardView')">←</div>
+            <div class="workout-title">10-MIN RECOVERY</div>
+            <div style="width:22px"></div>
+        </div>
+        <div class="timer-area">
+            <div class="timer-ring">
+                <svg width="220" height="220" viewBox="0 0 220 220">
+                    <circle class="ring-bg" cx="110" cy="110" r="100" stroke-width="8"/>
+                    <circle class="ring-fill" id="timerRing" cx="110" cy="110" r="100" stroke-width="8"/>
+                </svg>
+                <div class="timer-center">
+                    <div class="time" id="timerDisplay">5:00</div>
+                    <div class="sublabel">REMAINING</div>
+                </div>
+            </div>
+            <div class="exercise-label" id="exerciseLabel">Warm Up</div>
+            <div class="exercise-sub">Breathe deeply. Get into athlete mode.</div>
+            <div class="start-btn" id="startBtn" onclick="toggleTimer()">▶ START SESSION</div>
+        </div>
+    </div>
+
+    <!-- ===== ANALYTICS VIEW ===== -->
+    <div class="view" id="analyticsView">
+        <header>
+            <div class="logo-area">
+                <p class="eyebrow">FLEXFLOW</p>
+                <h1>Trends & Insights</h1>
+            </div>
+            <div class="avatar-group">
+                <div class="icon-btn" onclick="showView('dashboardView')">←</div>
+            </div>
+        </header>
+        <div class="analytics-body">
+            <div class="stat-row">
+                <div class="stat-box">
+                    <div class="stat-label">STREAK</div>
+                    <div class="stat-val" style="color: var(--primary);">12d</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">AVG MOOD</div>
+                    <div class="stat-val" style="color: var(--secondary);">4.5/5</div>
+                </div>
+            </div>
+
+            <div class="chart-area">
+                <span class="label">7-DAY CONSISTENCY</span>
+                <div class="chart-bars">
+                    <div class="bar" style="height:40%"></div>
+                    <div class="bar" style="height:65%"></div>
+                    <div class="bar" style="height:55%"></div>
+                    <div class="bar" style="height:80%"></div>
+                    <div class="bar" style="height:70%"></div>
+                    <div class="bar" style="height:90%"></div>
+                    <div class="bar" style="height:85%; background: var(--primary);"></div>
+                </div>
+            </div>
+
+            <div class="chart-area">
+                <span class="label">MOOD CORRELATION</span>
+                <div class="mood-bars">
+                    <div class="mood-bar" style="height:80%"></div>
+                    <div class="mood-bar" style="height:100%"></div>
+                    <div class="mood-bar" style="height:60%"></div>
+                    <div class="mood-bar" style="height:100%"></div>
+                    <div class="mood-bar" style="height:80%"></div>
+                    <div class="mood-bar" style="height:100%"></div>
+                    <div class="mood-bar" style="height:100%; background: var(--secondary);"></div>
+                </div>
+            </div>
+
+            <div class="insight-card">
+                <div class="insight-icon">✨</div>
+                <div class="insight-text"><b>Smart Insight</b><br>Your consistency is 15% higher during morning sessions. Shift your target to 8:00 AM to stay in athlete mode.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== QUIZ VIEW ===== -->
+    <div class="view" id="quizView">
+        <div class="quiz-view">
+            <div class="quiz-progress"><div class="quiz-progress-fill" id="quizProgress" style="width:50%"></div></div>
+            <h2 class="quiz-q" id="quizQuestion">How do you handle a missed workout session?</h2>
+            <div class="quiz-opt" onclick="finishQuiz('Stoic Wolf','🐺','You thrive on solitary discipline. Nothing breaks your pack of habits.')">Schedule a mini-session immediately to keep the streak alive</div>
+            <div class="quiz-opt" onclick="finishQuiz('Steady Mountain','🏔️','Unshakable and slow-building. You value the long-term journey over sprints.')">Accept it as a necessary part of the long journey</div>
+            <div class="quiz-opt" onclick="finishQuiz('Dynamic Phoenix','🔥','You excel at bouncing back. Even if you miss a day, you rise stronger.')">Rise stronger the very next morning</div>
+        </div>
+    </div>
+
+    <!-- ===== ARCHETYPE RESULT ===== -->
+    <div class="view" id="archetypeView">
+        <div class="archetype-view">
+            <div class="archetype-icon" id="archetypeIcon">🐺</div>
+            <div class="archetype-name" id="archetypeName">The Stoic Wolf</div>
+            <div class="archetype-desc" id="archetypeDesc">Your description will appear here.</div>
+            <div class="btn" onclick="showView('dashboardView')" style="width:100%; max-width: 280px;">EMBRACE THIS IDENTITY</div>
+        </div>
+    </div>
+
+    <!-- AI FAB -->
+    <div class="ai-fab" id="aiFab" onclick="toggleAI()">🧠</div>
+
+    <!-- AI SHEET -->
+    <div class="ai-sheet" id="aiSheet">
+        <div style="width:36px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; margin:0 auto 28px;"></div>
+        <h4>AI COACH · MEMORY RECALL</h4>
+        <p>You're in the elite flow right now. Your last 5 days show a strong pattern. Have you tried a high-intensity stretch session to aid recovery?</p>
+        <div class="ai-memory">
+            <span class="mem-label">COACH REMEMBERS</span>
+            • Yesterday: You felt highly motivated.<br>
+            • 2 days ago: You hit a 3-day recovery streak.
+        </div>
+        <div class="btn" onclick="toggleAI(); showView('workoutView')">START RECOVERY SESSION</div>
+        <div class="btn btn-outline" onclick="toggleAI()">CLOSE</div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchNav(this); showView('dashboardView')">
+            <div class="nav-icon">🏠</div>
+            <div class="nav-label">HOME</div>
+        </div>
+        <div class="nav-item" onclick="switchNav(this); showView('analyticsView')">
+            <div class="nav-icon">📊</div>
+            <div class="nav-label">TRENDS</div>
+        </div>
+        <div class="nav-item" onclick="switchNav(this); showView('workoutView')">
+            <div class="nav-icon">⚡</div>
+            <div class="nav-label">WORKOUT</div>
+        </div>
+        <div class="nav-item" onclick="switchNav(this); showView('quizView')">
+            <div class="nav-icon">🎯</div>
+            <div class="nav-label">QUIZ</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ---- VIEW ROUTING ----
+    function showView(id) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        const aiFab = document.getElementById('aiFab');
+        aiFab.style.display = (id === 'workoutView' || id === 'archetypeView') ? 'none' : 'flex';
+    }
+
+    function switchNav(el) {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    // ---- AI COACH ----
+    function toggleAI() {
+        document.getElementById('aiSheet').classList.toggle('active');
+    }
+
+    // ---- QUIZ ----
+    function finishQuiz(name, icon, desc) {
+        document.getElementById('archetypeIcon').textContent = icon;
+        document.getElementById('archetypeName').textContent = 'The ' + name;
+        document.getElementById('archetypeDesc').textContent = desc;
+        showView('archetypeView');
+    }
+
+    // ---- WORKOUT TIMER ----
+    let timerInterval = null;
+    let totalSeconds = 300;
+    let currentSeconds = 300;
+    let isRunning = false;
+    const steps = ['Warm Up', 'High Knees', 'Plank Hold', 'Push Ups', 'Cool Down'];
+    let stepIdx = 0;
+
+    function toggleTimer() {
+        if (isRunning) return;
+        isRunning = true;
+        document.getElementById('startBtn').textContent = '⏳ PUSHING LIMITS...';
+        document.getElementById('startBtn').classList.add('running');
+
+        timerInterval = setInterval(() => {
+            currentSeconds--;
+            if (currentSeconds < 0) {
+                clearInterval(timerInterval);
+                document.getElementById('timerDisplay').textContent = 'DONE!';
+                document.getElementById('exerciseLabel').textContent = '🏆 Consistency Win!';
+                document.getElementById('startBtn').textContent = '✓ +50 XP EARNED';
+                return;
+            }
+            const mins = Math.floor(currentSeconds / 60);
+            const secs = currentSeconds % 60;
+            document.getElementById('timerDisplay').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+            // Ring animation
+            const pct = currentSeconds / totalSeconds;
+            const offset = 628 - (628 * pct);
+            document.getElementById('timerRing').style.strokeDashoffset = offset;
+
+            // Step changes
+            const newStepIdx = Math.floor((1 - pct) * steps.length);
+            if (newStepIdx < steps.length && newStepIdx !== stepIdx) {
+                stepIdx = newStepIdx;
+                document.getElementById('exerciseLabel').textContent = steps[stepIdx];
+            }
+        }, 1000);
+    }
+
+    // Reset timer when leaving workout view
+    document.querySelector('[onclick*="workoutView"]') && document.querySelectorAll('[onclick*="workoutView"]').forEach(el => {
+        el.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            isRunning = false;
+            currentSeconds = totalSeconds;
+            stepIdx = 0;
+            document.getElementById('timerDisplay').textContent = '5:00';
+            document.getElementById('timerRing').style.strokeDashoffset = '94';
+            document.getElementById('exerciseLabel').textContent = 'Warm Up';
+            document.getElementById('startBtn').textContent = '▶ START SESSION';
+            document.getElementById('startBtn').classList.remove('running');
+        });
+    });
+
+</script>
+</body>
+</html>

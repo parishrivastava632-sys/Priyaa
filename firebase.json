@@ -1,15 +1,18 @@
 {
   "hosting": {
-    "public": "build/web",
+    "public": ".",
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "lib/**",
+      "pubspec.yaml",
+      ".github/**"
     ],
     "rewrites": [
       {
         "source": "**",
-        "destination": "/index.html"
+        "destination": "/preview.html"
       }
     ]
   }

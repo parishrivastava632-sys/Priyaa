@@ -1,0 +1,10 @@
+.git
+lib/
+.github/
+node_modules/
+build/
+pubspec.yaml
+pubspec.lock
+*.dart
+*.yaml
+*.lock
