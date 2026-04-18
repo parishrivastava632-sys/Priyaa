@@ -1,0 +1,32 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Android
+.gradle/
+local.properties
+*.keystore
+*.jks
+captures/
+output.json
+
+# iOS
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata/
+DerivedData/
+*.moved-aside
+*.xcuserstate
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Firebase
+firebase_options.dart
+.firebaserc
