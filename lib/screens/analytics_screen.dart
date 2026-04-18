@@ -38,9 +38,36 @@ class AnalyticsScreen extends StatelessWidget {
               child: _buildTrendChart(),
             ),
             const SizedBox(height: 40),
+            Text(
+              "MOOD CORRELATION",
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Colors.white54,
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildMoodChart(fitness.dailyMoods),
+            const SizedBox(height: 40),
             _buildInsightCard(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMoodChart(List<int> moods) {
+    return Container(
+      height: 60,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: moods.map((m) => Container(
+          width: 30,
+          height: m * 10.0,
+          decoration: BoxDecoration(
+            color: const Color(0xFF38BDF8).withOpacity(0.5),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        )).toList(),
       ),
     );
   }

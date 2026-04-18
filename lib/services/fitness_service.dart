@@ -4,14 +4,21 @@ import '../models/activity.dart';
 class FitnessService with ChangeNotifier {
   final List<Activity> _activities = [];
   final List<UserMetrics> _metrics = [];
+  final List<int> _dailyMoods = [4, 5, 3, 5, 4, 5, 5]; // Mock mood history (1-5)
   bool _onboardingSeen = false;
 
   List<Activity> get activities => List.unmodifiable(_activities);
+  List<int> get dailyMoods => List.unmodifiable(_dailyMoods);
   bool get onboardingSeen => _onboardingSeen;
   
-  void setOnboardingSeen() {
-    _onboardingSeen = true;
+  void logMood(int mood) {
+    _dailyMoods.add(mood);
     notifyListeners();
+  }
+
+  double getMoodConsistencyCorrelation() {
+    // Mock correlation logic: higher mood = higher consistency
+    return 0.85; 
   }
   
   void addActivity(Activity activity) {

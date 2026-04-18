@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:glass_kit/glass_kit.dart';
+import 'package:provider/provider.dart';
 import '../services/fitness_service.dart';
 import '../services/motivation_service.dart';
-import '../services/gamification_service.dart';
 import '../services/health_service.dart';
+import '../models/motivation_nudge.dart';
 import '../widgets/nudge_card.dart';
 import '../widgets/ai_coach_sheet.dart';
 import '../widgets/activity_heatmap.dart';
 import '../widgets/leaderboard_widget.dart';
+import 'profile_screen.dart';
+import 'workout_screen.dart';
+import 'analytics_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -17,11 +20,12 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final fitness = context.watch<FitnessService>();
     final motivation = context.watch<MotivationService>();
-    final gamification = context.watch<GamificationService>();
     final health = context.watch<HealthService>();
+    
     final score = fitness.getConsistencyScore();
-    final momentum = fitness.getMomentumState();
-    final isAtRisk = fitness.isAtRisk();
+    final state = fitness.getMomentumState();
+    final nudges = motivation.getIdentityNudges(state);
+    final suggestion = fitness.getAdaptiveSuggestion();
 
     return Scaffold(
       body: Container(
@@ -34,74 +38,55 @@ class DashboardScreen extends StatelessWidget {
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(context, gamification, health, fitness),
+                _buildHeader(context, fitness, health),
                 const SizedBox(height: 32),
-                if (isAtRisk) _buildRiskWarning(context),
-                if (isAtRisk) const SizedBox(height: 16),
-                _buildConsistencyTracker(context, score, momentum),
-                const SizedBox(height: 32),
-                _buildAdaptiveSuggestion(context, fitness.getAdaptiveSuggestion()),
-                const SizedBox(height: 32),
-                const ActivityHeatmap(),
-                const SizedBox(height: 32),
-                _buildBadgeSection(context, gamification.earnedBadges),
-                const SizedBox(height: 32),
-                const LeaderboardWidget(),
-                const SizedBox(height: 32),
-                Text(
-                  "FOR YOUR IDENTITY",
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: Colors.white54,
-                    letterSpacing: 2,
-                  ),
-                ),
+                _buildConsistencyMeter(context, score, state),
+                const SizedBox(height: 40),
+                _buildActivityHeatmap(context),
+                const SizedBox(height: 40),
+                _buildSectionHeader("ADAPTIVE COACHING"),
                 const SizedBox(height: 16),
-                _buildNudgeStream(motivation.currentNudges),
-                const SizedBox(height: 80), // Padding for FAB
+                _buildSuggestionCard(context, suggestion),
+                const SizedBox(height: 40),
+                _buildSectionHeader("IDENTITY NUDGES"),
+                const SizedBox(height: 16),
+                _buildNudgeStream(nudges),
+                const SizedBox(height: 40),
+                _buildSectionHeader("COMMUNITY MOMENTUM"),
+                const SizedBox(height: 16),
+                const LeaderboardWidget(),
+                const SizedBox(height: 100), // Bottom padding
               ],
             ),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {}, // Log workout action
-        backgroundColor: const Color(0xFFCCFF00),
-        icon: const Icon(Icons.add, color: Colors.black),
-        label: const Text("LOG ACTIVITY", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-      ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, GamificationService gamification, HealthService health, FitnessService fitness) {
+  Widget _buildHeader(BuildContext context, FitnessService fitness, HealthService health) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Text(
-                  "Level ${gamification.level}",
-                  style: const TextStyle(color: Color(0xFFCCFF00), fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  "• ${gamification.xp} XP",
-                  style: const TextStyle(color: Colors.white54, fontSize: 12),
-                ),
-              ],
-            ),
             Text(
-              "FlexFlow",
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+              "FLEXFLOW",
+              style: TextStyle(
+                color: Theme.of(context).primaryColor,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 4,
+                fontSize: 12,
+              ),
+            ),
+            const Text(
+              "Athlete Mode",
+              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -119,65 +104,21 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
             GestureDetector(
-              onTap: () => _showAiCoach(context),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen())),
               child: const CircleAvatar(
-                backgroundColor: Color(0xFFCCFF00),
-                child: Icon(Icons.psychology, color: Colors.black),
+                backgroundColor: Colors.white10,
+                child: Icon(Icons.person_outline, color: Colors.white),
+              ),
+            ),
+            const SizedBox(width: 12),
+            GestureDetector(
+              onTap: () => _showAiCoach(context),
+              child: CircleAvatar(
+                backgroundColor: Theme.of(context).primaryColor,
+                child: const Icon(Icons.psychology, color: Colors.black),
               ),
             ),
           ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRiskWarning(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.redAccent.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
-          SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              "MOMENTUM ALERT: Your consistency is dropping. A 2-min session will save your streak!",
-              style: TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBadgeSection(BuildContext context, List<Badge> badges) {
-    if (badges.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "EARNED BADGES",
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: Colors.white54,
-            letterSpacing: 2,
-          ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 60,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: badges.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) => CircleAvatar(
-              backgroundColor: badges[index].color.withOpacity(0.2),
-              child: Icon(badges[index].icon, color: badges[index].color, size: 20),
-            ),
-          ),
         ),
       ],
     );
@@ -192,104 +133,101 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildConsistencyTracker(BuildContext context, double score, String momentum) {
-    return GlassContainer.clearGlass(
-      height: 200,
+  Widget _buildConsistencyMeter(BuildContext context, double score, String state) {
+    return GlassContainer.frostedGlass(
+      height: 180,
       width: double.infinity,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(32),
       borderWidth: 1,
       borderColor: Colors.white10,
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Consistency Score",
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white70),
+            const Text("7-DAY CONSISTENCY", style: TextStyle(color: Colors.white54, letterSpacing: 2, fontSize: 13)),
+            const Spacer(),
+            Row(
+              children: [
+                Text(
+                  "${(score * 100).toInt()}%",
+                  style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _getMomentumColor(state).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "${(score * 100).toInt()}%",
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                  child: Text(
+                    state.toUpperCase(),
+                    style: TextStyle(color: _getMomentumColor(state), fontWeight: FontWeight.bold, fontSize: 12),
                   ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getMomentumColor(momentum).withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      momentum.toUpperCase(),
-                      style: TextStyle(
-                        color: _getMomentumColor(momentum),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            _buildCircularProgress(score),
+            const Spacer(),
+            LinearProgressIndicator(
+              value: score,
+              backgroundColor: Colors.white10,
+              color: _getMomentumColor(state),
+              minHeight: 8,
+              borderRadius: BorderRadius.circular(4),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCircularProgress(double score) {
-    return SizedBox(
-      height: 100,
-      width: 100,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          CircularProgressIndicator(
-            value: score,
-            strokeWidth: 10,
-            backgroundColor: Colors.white10,
-            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFCCFF00)),
-          ),
-          Center(
-            child: Icon(
-              Icons.bolt,
-              size: 40,
-              color: score > 0.5 ? const Color(0xFFCCFF00) : Colors.white30,
-            ),
-          ),
-        ],
-      ),
+  Widget _buildActivityHeatmap(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("YOUR MOMENTUM JOURNEY", style: TextStyle(color: Colors.white54, letterSpacing: 2, fontSize: 12)),
+        SizedBox(height: 16),
+        ActivityHeatmap(),
+      ],
     );
   }
 
-  Widget _buildAdaptiveSuggestion(BuildContext context, String suggestion) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF38BDF8).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF38BDF8).withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.lightbulb_outline, color: Color(0xFF38BDF8)),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              suggestion,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: const TextStyle(color: Colors.white54, letterSpacing: 2, fontSize: 13, fontWeight: FontWeight.bold),
+    );
+  }
+
+  Widget _buildSuggestionCard(BuildContext context, String suggestion) {
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => WorkoutScreen(workoutTitle: suggestion))),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.2)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.lightbulb_outline, color: Theme.of(context).primaryColor),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("LIVE SUGGESTION", style: TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1)),
+                  Text(
+                    suggestion,
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const Icon(Icons.arrow_forward_ios, color: Colors.white24, size: 16),
+          ],
+        ),
       ),
     );
   }
