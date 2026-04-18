@@ -108,6 +108,10 @@ class DashboardScreen extends StatelessWidget {
         Row(
           children: [
             IconButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AnalyticsScreen())),
+              icon: const Icon(Icons.bar_chart, color: Colors.white54),
+            ),
+            IconButton(
               onPressed: health.isSyncing ? null : () => health.syncData(fitness),
               icon: Icon(
                 health.isSyncing ? Icons.sync : Icons.cloud_download_outlined,

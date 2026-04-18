@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/dashboard_screen.dart';
+import 'screens/onboarding_screen.dart';
 
 class FlexFlowApp extends StatelessWidget {
   const FlexFlowApp({super.key});
@@ -24,7 +24,7 @@ class FlexFlowApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const DashboardScreen(),
+      home: const OnboardingScreen(),
     );
   }
 }
